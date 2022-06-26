@@ -5,9 +5,15 @@
 package it.polito.tdp.PremierLeague;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.PremierLeague.model.Coppie;
 import it.polito.tdp.PremierLeague.model.Model;
+import it.polito.tdp.PremierLeague.model.Team;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -35,7 +41,7 @@ public class FXMLController {
     private Button btnSimula; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbSquadra"
-    private ComboBox<?> cmbSquadra; // Value injected by FXMLLoader
+    private ComboBox<Team> cmbSquadra; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtN"
     private TextField txtN; // Value injected by FXMLLoader
@@ -48,17 +54,52 @@ public class FXMLController {
 
     @FXML
     void doClassifica(ActionEvent event) {
+    	try {
+    		Team team = cmbSquadra.getValue();
+    		List<Coppie> peggiori = new ArrayList<>(this.model.squadrePeggiori(team));
+    		List<Coppie> migliori = new ArrayList<>(this.model.squadreMigliori(team));
+    		txtResult.appendText("\n\nSquadre migliori:\n");
+    		for(Coppie c : migliori) {
+    			txtResult.appendText(c.toString() + "\n");
+    		}
+    		
+    		txtResult.appendText("\n\nSquadre peggiori:\n");
+    		for(Coppie c : peggiori) {
+    			txtResult.appendText(c.toString() + "\n");
+    		}
+    		
+    	} catch (NullPointerException e) {
+    		txtResult.appendText("Creare grafo e selezionare una squadra prima di procedere\n");
+    		return;
+    	}
 
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	this.model.creaGrafo();
+    	txtResult.setText("Grafo creato!\nNumero vertici: " + model.getNumeroVertici());
+		txtResult.appendText("\nNumero archi: " + model.getNumeroArchi() + "\n");
 
     }
 
     @FXML
     void doSimula(ActionEvent event) {
-
+    	try {
+    		int N = Integer.parseInt(txtN.getText());
+    		int soglia = Integer.parseInt(txtX.getText());
+    		this.model.simula(N, soglia);
+    		txtResult.appendText("Simulazione svolta con successo.\n");
+    		txtResult.appendText("Media reporter: " + this.model.getMediaReporter());
+    		txtResult.appendText("\nGiorni sotto soglia critica: " + this.model.getSfori() + "\n");
+    		
+    	} catch (NumberFormatException e) {
+    		txtResult.appendText("Inserire numeri interi per soglia e reporter.\n");
+    		return;
+    	} catch (NullPointerException e) {
+    		txtResult.appendText("Inserire numeri interi per soglia e reporter.\n");
+    		return;
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -74,5 +115,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.cmbSquadra.getItems().addAll(this.model.listAllTeams()) ;
     }
 }
